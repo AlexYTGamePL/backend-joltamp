@@ -31,8 +31,7 @@ func GetUser(session *gocql.Session) gin.HandlerFunc {
 			Password string
 		}
 		if err := session.Query(`SELECT user_id, password FROM users WHERE email = ? ALLOW FILTERING`, user.Email).Scan(&dbUser.UserID, &dbUser.Password); err != nil {
-			println(err.Error())
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Server error db#002"})
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "User not found"})
 			return
 		}
 

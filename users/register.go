@@ -45,7 +45,8 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Server error p#001"})
 			return
 		}
-		err := session.Query(`INSERT INTO users (createdat, user_id, username, displayname, email, password, isadmin) VALUES (todate(now()), uuid(), ?, ?, ?, ?, false)`, newUser.Username, newUser.Username, newUser.Email, passwordHash).Exec()
+		userJwt, _ := gocql.RandomUUID()
+		err := session.Query(`INSERT INTO users (createdat, user_id, username, displayname, email, password, isadmin, jwt) VALUES (todate(now()), uuid(), ?, ?, ?, ?, false, ?)`, newUser.Username, newUser.Username, newUser.Email, passwordHash, userJwt).Exec()
 		if err != nil {
 			println(err.Error())
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Server error db#001"})
@@ -57,9 +58,11 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 			"user": struct {
 				Username string
 				Email    string
+				JWT      gocql.UUID
 			}{
 				Username: newUser.Username,
 				Email:    newUser.Email,
+				JWT:      userJwt,
 			},
 		})
 	}

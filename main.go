@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend-joltamp/friends"
 	"backend-joltamp/users"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
@@ -26,9 +27,12 @@ func main() {
 	}
 	defer session.Close()
 	router := gin.Default()
+	// User login/register
 	router.POST("/users/register", users.SaveUser(session))
 	router.POST("/users/login", users.GetUser(session))
-	errtwo := router.Run("localhost:8080")
+	// User friends
+	router.GET("/friends/:jwt", friends.GetFriends(session))
+	errtwo := router.Run("localhost:3000")
 	if errtwo != nil {
 		println(errtwo.Error())
 		return
