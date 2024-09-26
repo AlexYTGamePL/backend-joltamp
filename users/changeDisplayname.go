@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-type requestType struct {
+type changeDisplaynameRequestType struct {
 	newDisplayname string `json:"displayname"`
 }
 type userType struct {
@@ -17,7 +17,7 @@ type userType struct {
 
 func ChangeDisplayname(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var request requestType
+		var request changeDisplaynameRequestType
 		if err := c.BindJSON(&request); err != nil {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Wrong request format"})
 			println(err.Error())
