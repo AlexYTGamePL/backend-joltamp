@@ -7,8 +7,8 @@ import (
 )
 
 type requestType struct {
-	jwt            gocql.UUID
-	newDisplayname string
+	jwt            gocql.UUID `json:"jwt"`
+	newDisplayname string     `json:"displayname"`
 }
 type userType struct {
 	createdat string
