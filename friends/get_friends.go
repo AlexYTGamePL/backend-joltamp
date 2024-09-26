@@ -12,9 +12,9 @@ func GetFriends(sesion *gocql.Session) gin.HandlerFunc {
 
 		var friends map[gocql.UUID]bool
 
-		println(c.Param("jwt"))
+		jwt := c.GetHeader("Authorization")
 
-		if err := sesion.Query(`SELECT friends_ids FROM users WHERE jwt = ? ALLOW FILTERING`, c.Param("jwt")).Consistency(gocql.One).Scan(&friends); err != nil {
+		if err := sesion.Query(`SELECT friends_ids FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Consistency(gocql.One).Scan(&friends); err != nil {
 			println(friends)
 			println(err.Error())
 			return
@@ -22,6 +22,5 @@ func GetFriends(sesion *gocql.Session) gin.HandlerFunc {
 			c.IndentedJSON(http.StatusOK, gin.H{"friends": friends})
 			return
 		}
-		return
 	}
 }

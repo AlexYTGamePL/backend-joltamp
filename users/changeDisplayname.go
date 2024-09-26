@@ -23,7 +23,7 @@ func ChangeDisplayname(session *gocql.Session) gin.HandlerFunc {
 			println(err.Error())
 			return
 		}
-		jwt := c.GetHeader("Auth")
+		jwt := c.GetHeader("Authorization")
 		var dbuser userType
 		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Scan(&dbuser.createdat, &dbuser.userId, &dbuser.username); err != nil {
 			println(err.Error())

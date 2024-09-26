@@ -41,7 +41,7 @@ func main() {
 	router.POST("/users/login", users.GetUser(session))
 	router.POST("/users/changeDisplayname", users.ChangeDisplayname(session))
 	// User friends
-	router.GET("/friends/:jwt", friends.GetFriends(session))
+	router.GET("/friends", friends.GetFriends(session))
 	errtwo := router.Run("192.168.0.20:3000")
 	if errtwo != nil {
 		println(errtwo.Error())
