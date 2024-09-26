@@ -7,8 +7,7 @@ import (
 )
 
 type requestType struct {
-	jwt            gocql.UUID `json:"jwt"`
-	newDisplayname string     `json:"displayname"`
+	newDisplayname string `json:"displayname"`
 }
 type userType struct {
 	createdat string
@@ -18,16 +17,15 @@ type userType struct {
 
 func ChangeDisplayname(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		var request requestType
 		if err := c.BindJSON(&request); err != nil {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Wrong request format"})
 			println(err.Error())
 			return
 		}
-
+		jwt := c.GetHeader("Auth")
 		var dbuser userType
-		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ? ALLOW FILTERING`, request.jwt).Scan(&dbuser.createdat, &dbuser.userId, &dbuser.username); err != nil {
+		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Scan(&dbuser.createdat, &dbuser.userId, &dbuser.username); err != nil {
 			println(err.Error())
 			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
