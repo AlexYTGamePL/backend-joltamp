@@ -2,9 +2,10 @@ package users
 
 import (
 	"backend-joltamp/security"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
-	"net/http"
 )
 
 func GetUser(session *gocql.Session) gin.HandlerFunc {
@@ -29,14 +30,15 @@ func GetUser(session *gocql.Session) gin.HandlerFunc {
 		var dbUser struct {
 			UserID   gocql.UUID
 			Password string
+			JWT      gocql.UUID
 		}
-		if err := session.Query(`SELECT user_id, password FROM users WHERE email = ? ALLOW FILTERING`, user.Email).Scan(&dbUser.UserID, &dbUser.Password); err != nil {
+		if err := session.Query(`SELECT user_id, password, jwt FROM users WHERE email = ? ALLOW FILTERING`, user.Email).Scan(&dbUser.UserID, &dbUser.Password, &dbUser.JWT); err != nil {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "User not found"})
 			return
 		}
 
 		if security.CheckPasswordHash(user.Password, dbUser.Password) {
-			c.IndentedJSON(http.StatusOK, gin.H{"user": dbUser.UserID})
+			c.IndentedJSON(http.StatusOK, gin.H{"jwt": dbUser.JWT})
 			return
 		} else {
 			c.IndentedJSON(http.StatusUnauthorized, gin.H{"error": "Incorrect password"})

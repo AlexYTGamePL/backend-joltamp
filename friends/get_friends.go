@@ -1,9 +1,10 @@
 package friends
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
-	"net/http"
 )
 
 func GetFriends(sesion *gocql.Session) gin.HandlerFunc {
@@ -21,8 +22,6 @@ func GetFriends(sesion *gocql.Session) gin.HandlerFunc {
 			c.IndentedJSON(http.StatusOK, gin.H{"friends": friends})
 			return
 		}
-
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 }
