@@ -19,18 +19,21 @@ type userType struct {
 func ChangeDisplayname(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		request := requestType{}
-		if err := c.BindJSON(request); err != nil {
+		var request requestType
+		if err := c.BindJSON(&request); err != nil {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Wrong request format"})
+			println(err.Error())
 			return
 		}
 
-		dbuser := userType{}
-		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ?`, request.jwt).Scan(&dbuser.createdat, &dbuser.userId, &dbuser.username); err != nil {
+		var dbuser userType
+		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ? ALLOW FILTERING`, request.jwt).Scan(&dbuser.createdat, &dbuser.userId, &dbuser.username); err != nil {
+			println(err.Error())
 			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
 		if err := session.Query(`UPDATE users SET displayname = ? WHERE createdat = ? AND user_id = ? AND username = ?`, request.newDisplayname, dbuser.createdat, dbuser.userId, dbuser.username).Exec(); err != nil {
+			println(err.Error())
 			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
