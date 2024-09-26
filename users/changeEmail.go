@@ -21,12 +21,12 @@ func ChangeEmail(session *gocql.Session) gin.HandlerFunc {
 			return
 		}
 
-		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Consistency(gocql.One).Scan(&dbuser); err != nil {
+		if err := session.Query(`SELECT createdat, user_id, username FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Consistency(gocql.One).Scan(&dbuser.createdat, &dbuser.userId, &dbuser.username); err != nil {
 			println(err.Error())
 			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
 		}
-		if err := session.Query(`UPDATE users SET email = ? WHERE createdat = ? AND user_id = ? AND username = ?`, request.email, dbuser).Exec(); err != nil {
+		if err := session.Query(`UPDATE users SET email = ? WHERE createdat = ? AND user_id = ? AND username = ?`, request.email, dbuser.createdat, dbuser.userId, dbuser.username).Exec(); err != nil {
 			println(err.Error())
 			c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 			return
