@@ -43,7 +43,7 @@ func main() {
 	router.POST("/users/changeEmail", users.ChangeEmail(session))
 	// User friends
 	router.GET("/friends", friends.GetFriends(session))
-	errtwo := router.Run("192.168.0.20:3000")
+	errtwo := router.Run("127.0.0.1:3000")
 	if errtwo != nil {
 		println(errtwo.Error())
 		return
