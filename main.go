@@ -44,9 +44,11 @@ func main() {
 	// User friends
 	router.GET("/friends", friends.GetFriends(session))
 	router.POST("/friends/sendRequest", friends.SendRequest(session))
-	errtwo := router.Run(os.Getenv("BACKEND_RUN_IP") + ":" + os.Getenv("BACKEND_RUN_PORT"))
-	if errtwo != nil {
-		println(errtwo.Error())
-		return
+	if os.Getenv("RUN_AS_HTTPS") == "true" {
+		println("Running as HTTPS")
+		router.RunTLS(os.Getenv("BACKEND_RUN_IP")+":"+os.Getenv("BACKEND_RUN_PORT"), os.Getenv("BACKEND_CERT"), os.Getenv("BACKEND_KEY"))
+	} else {
+		println("Running as HTTP")
+		router.Run(os.Getenv("BACKEND_RUN_IP") + ":" + os.Getenv("BACKEND_RUN_PORT"))
 	}
 }
