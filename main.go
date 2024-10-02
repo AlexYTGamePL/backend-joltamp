@@ -36,14 +36,18 @@ func main() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
+	apiV0 := router.Group("/api/v0")
 	// User login/register
-	router.POST("/users/register", users.SaveUser(session))
-	router.POST("/users/login", users.GetUser(session))
-	router.POST("/users/changeDisplayname", users.ChangeDisplayname(session))
-	router.POST("/users/changeEmail", users.ChangeEmail(session))
+	usersRouter := apiV0.Group("/users")
+	usersRouter.POST("/register", users.SaveUser(session))
+	usersRouter.POST("/login", users.GetUser(session))
+	usersRouter.POST("/changeDisplayname", users.ChangeDisplayname(session))
+	usersRouter.POST("/changeEmail", users.ChangeEmail(session))
+	usersRouter.GET("/isAdmin", users.IsAdmin(session))
 	// User friends
-	router.GET("/friends", friends.GetFriends(session))
-	router.POST("/friends/sendRequest", friends.SendRequest(session))
+	friendsRouter := apiV0.Group("/friends")
+	friendsRouter.GET("/", friends.GetFriends(session))
+	friendsRouter.POST("/sendRequest", friends.SendRequest(session))
 	if os.Getenv("RUN_AS_HTTPS") == "true" {
 		println("Running as HTTPS")
 		router.RunTLS(os.Getenv("BACKEND_RUN_IP")+":"+os.Getenv("BACKEND_RUN_PORT"), os.Getenv("BACKEND_CERT"), os.Getenv("BACKEND_KEY"))
