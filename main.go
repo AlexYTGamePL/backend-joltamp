@@ -43,7 +43,8 @@ func main() {
 	usersRouter.POST("/login", users.GetUser(session))
 	usersRouter.POST("/changeDisplayname", users.ChangeDisplayname(session))
 	usersRouter.POST("/changeEmail", users.ChangeEmail(session))
-	usersRouter.GET("/isAdmin", users.IsAdmin(session))
+	usersRouter.GET("/isAdmin/:userId", users.IsAdmin(session))
+	usersRouter.GET("/getInfo/:userId", users.GetInfo(session))
 	// User friends
 	friendsRouter := apiV0.Group("/friends")
 	friendsRouter.GET("/", friends.GetFriends(session))

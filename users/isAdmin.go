@@ -8,9 +8,9 @@ import (
 
 func IsAdmin(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		jwt := c.GetHeader("Authorization")
+		userId := c.Param("userId")
 		var isAdmin bool
-		if err := session.Query(`SELECT isAdmin FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Scan(&isAdmin); err != nil {
+		if err := session.Query(`SELECT isAdmin FROM users WHERE user_id = ? ALLOW FILTERING`, userId).Scan(&isAdmin); err != nil {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		} else {
