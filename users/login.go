@@ -38,7 +38,7 @@ func GetUser(session *gocql.Session) gin.HandlerFunc {
 		}
 
 		if security.CheckPasswordHash(user.Password, dbUser.Password) {
-			c.IndentedJSON(http.StatusOK, gin.H{"jwt": dbUser.JWT})
+			c.IndentedJSON(http.StatusOK, gin.H{"jwt": dbUser.JWT, "UserId": dbUser.UserID})
 			return
 		} else {
 			c.IndentedJSON(http.StatusUnauthorized, gin.H{"error": "Incorrect password"})

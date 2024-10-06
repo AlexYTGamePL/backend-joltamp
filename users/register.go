@@ -46,7 +46,8 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 			return
 		}
 		userJwt, _ := gocql.RandomUUID()
-		err := session.Query(`INSERT INTO users (createdat, user_id, username, displayname, email, password, isadmin, jwt) VALUES (todate(now()), uuid(), ?, ?, ?, ?, false, ?)`, newUser.Username, newUser.Username, newUser.Email, passwordHash, userJwt).Exec()
+		userId, _ := gocql.RandomUUID()
+		err := session.Query(`INSERT INTO users (createdat, user_id, username, displayname, email, password, isadmin, jwt) VALUES (todate(now()), , ?, ?, ?, ?, false, ?)`, userId, newUser.Username, newUser.Username, newUser.Email, passwordHash, userJwt).Exec()
 		if err != nil {
 			println(err.Error())
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Server error db#001"})
@@ -59,10 +60,12 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 				Username string
 				Email    string
 				JWT      gocql.UUID
+				UserId   gocql.UUID
 			}{
 				Username: newUser.Username,
 				Email:    newUser.Email,
 				JWT:      userJwt,
+				UserId:   userId,
 			},
 		})
 	}
