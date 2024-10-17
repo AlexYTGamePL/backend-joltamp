@@ -2,6 +2,7 @@ package main
 
 import (
 	"backend-joltamp/friends"
+	"backend-joltamp/messages"
 	"backend-joltamp/users"
 	"os"
 
@@ -49,6 +50,10 @@ func main() {
 	friendsRouter := apiV0.Group("/friends")
 	friendsRouter.GET("/", friends.GetFriends(session))
 	friendsRouter.POST("/sendRequest", friends.SendRequest(session))
+
+	messagesRouter := apiV0.Group("/messages")
+	messagesRouter.POST("/", messages.LoadMessages(session))
+	messagesRouter.POST("/send", messages.SendMessage(session))
 	if os.Getenv("RUN_AS_HTTPS") == "true" {
 		println("Running as HTTPS")
 		router.RunTLS(os.Getenv("BACKEND_RUN_IP")+":"+os.Getenv("BACKEND_RUN_PORT"), os.Getenv("BACKEND_CERT"), os.Getenv("BACKEND_KEY"))
