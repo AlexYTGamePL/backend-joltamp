@@ -34,11 +34,11 @@ func SendRequest(session *gocql.Session) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#003 - " + err.Error()})
 			return
 		}
-		if err := session.Query(`UPDATE users SET friends_ids = friends_ids + {?: ?} WHERE createdat = ? AND user_id = ? AND username = ?`, request.To, false, sender.createdat, sender.userId, sender.username).Exec(); err != nil {
+		if err := session.Query(`UPDATE users SET friends = friends + {?: ?} WHERE createdat = ? AND user_id = ? AND username = ?`, request.To, 0, sender.createdat, sender.userId, sender.username).Exec(); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#004 - " + err.Error()})
 			return
 		}
-		if err := session.Query(`UPDATE users SET friends_ids = friends_ids + {?: ?} WHERE createdat = ? AND user_id = ? AND username = ?`, sender.userId, false, target.createdat, target.userId, target.username).Exec(); err != nil {
+		if err := session.Query(`UPDATE users SET friends = friends + {?: ?} WHERE createdat = ? AND user_id = ? AND username = ?`, sender.userId, 1, target.createdat, target.userId, target.username).Exec(); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#005 - " + err.Error()})
 			return
 		}

@@ -14,15 +14,17 @@ func GetInfo(session *gocql.Session) gin.HandlerFunc {
 			return
 		}
 		var user struct {
-			Createdat   string       `json:"createdat"`
-			UserId      gocql.UUID   `json:"user_id"`
-			Username    string       `json:"username"`
-			Badges      []gocql.UUID `json:"badges"`
-			Displayname string       `json:"displayname"`
-			Email       string       `json:"email"`
+			Createdat       string       `json:"createdat"`
+			UserId          gocql.UUID   `json:"user_id"`
+			Username        string       `json:"username"`
+			Badges          []gocql.UUID `json:"badges"`
+			Displayname     string       `json:"displayname"`
+			BannerColor     string       `json:"bannercolor"`
+			BackgroundColor string       `json:"backgroundcolor"`
+			Status          int          `json:"status"`
 		}
 		if err := session.Query(
-			`SELECT createdat, user_id, username, badges, displayname, email FROM users WHERE user_id = ? ALLOW FILTERING`,
+			`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor, status FROM users WHERE user_id = ? ALLOW FILTERING`,
 			target,
 		).Scan(
 			&user.Createdat,
@@ -30,7 +32,9 @@ func GetInfo(session *gocql.Session) gin.HandlerFunc {
 			&user.Username,
 			&user.Badges,
 			&user.Displayname,
-			&user.Email,
+			&user.BannerColor,
+			&user.BackgroundColor,
+			&user.Status,
 		); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

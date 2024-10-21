@@ -46,6 +46,7 @@ func main() {
 	usersRouter.POST("/changeEmail", users.ChangeEmail(session))
 	usersRouter.GET("/isAdmin/:userId", users.IsAdmin(session))
 	usersRouter.GET("/getInfo/:userId", users.GetInfo(session))
+	usersRouter.POST("/setStatus", users.SetStatus(session))
 	// User friends
 	friendsRouter := apiV0.Group("/friends")
 	friendsRouter.GET("/", friends.GetFriends(session))

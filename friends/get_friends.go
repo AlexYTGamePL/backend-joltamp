@@ -1,26 +1,58 @@
 package friends
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
+	"net/http"
 )
 
-func GetFriends(sesion *gocql.Session) gin.HandlerFunc {
+type user struct {
+	Status          *int8        `json:"friendstatus,omitempty"`
+	Createdat       string       `json:"createdat"`
+	UserId          gocql.UUID   `json:"user_id"`
+	Username        string       `json:"username"`
+	Badges          []gocql.UUID `json:"badges"`
+	Displayname     string       `json:"displayname"`
+	BannerColor     string       `json:"bannercolor"`
+	BackgroundColor string       `json:"backgroundcolor"`
+}
+
+func GetFriends(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		var friends map[gocql.UUID]bool
+		var friends map[gocql.UUID]int8
 
 		jwt := c.GetHeader("Authorization")
 
-		if err := sesion.Query(`SELECT friends_ids FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Consistency(gocql.One).Scan(&friends); err != nil {
+		if err := session.Query(`SELECT friends FROM users WHERE jwt = ? ALLOW FILTERING`, jwt).Consistency(gocql.One).Scan(&friends); err != nil {
 			println(friends)
 			println(err.Error())
 			return
 		} else {
-			c.IndentedJSON(http.StatusOK, gin.H{"friends": friends})
-			return
+			result := make(map[gocql.UUID]user)
+			for uuid, status := range friends {
+				var userDetail user
+				if err := session.Query(
+					`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor FROM users WHERE user_id = ? ALLOW FILTERING`,
+					uuid,
+				).Scan(
+					&userDetail.Createdat,
+					&userDetail.UserId,
+					&userDetail.Username,
+					&userDetail.Badges,
+					&userDetail.Displayname,
+					&userDetail.BannerColor,
+					&userDetail.BackgroundColor,
+				); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				} else {
+					userDetail.Status = &status
+					result[userDetail.UserId] = userDetail
+				}
+				continue
+			}
+			c.JSON(http.StatusOK, result)
 		}
 	}
 }
