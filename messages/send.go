@@ -13,16 +13,17 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 		jwt := c.GetHeader("Authorization")
 		if ret := security.VerifyJWT(jwt, session); ret.Status {
 			var body struct {
-				Target  gocql.UUID `json:"target"`
-				Type    string     `json:"type"`
-				Content string     `json:"content"`
+				Target  gocql.UUID  `json:"target"`
+				Server  *gocql.UUID `json:"server"`
+				Content string      `json:"content"`
+				Reply   *gocql.UUID `json:"reply"`
 			}
 			if err := c.BindJSON(&body); err != nil {
 				c.Status(http.StatusBadRequest)
 				return
 			}
 			var target string
-			if body.Type == "DM" {
+			if body.Server == nil {
 				target = CombineUUIDs(ret.User.UserId, body.Target)
 			} else {
 				target = body.Target.String()
@@ -30,8 +31,20 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 
 			messageId, _ := gocql.RandomUUID()
 			timeVar := time.Now().UTC()
-			if err := session.Query(`INSERT INTO messages (server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, sent_by) VALUES ('', ?, toDate(now()), ?, ?, ?, false, null, ?)`, target, timeVar, messageId, body.Content, ret.User.UserId).Exec(); err != nil {
-				println(err.Error())
+			if err := session.Query(`INSERT INTO messages (server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, reply, sent_by) VALUES (?, ?, toDate(now()), ?, ?, ?, false, null, ?, ?)`, func() string {
+				if body.Server != nil {
+					return body.Server.String()
+				} else {
+					return ""
+				}
+			}(), target, timeVar, messageId, body.Content, func() string {
+				if body.Reply != nil {
+					return body.Reply.String()
+				} else {
+					return ""
+				}
+			}(), ret.User.UserId).Exec(); err != nil {
+				println("47 - " + err.Error())
 				c.Status(http.StatusInternalServerError)
 				return
 			}
@@ -45,6 +58,7 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 				Content    string
 				Edited     bool
 				Reactions  map[gocql.UUID]string
+				Reply      string
 				SentBy     gocql.UUID
 			}
 
@@ -58,6 +72,7 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 				&insertedMessage.Content,
 				&insertedMessage.Edited,
 				&insertedMessage.Reactions,
+				&insertedMessage.Reply,
 				&insertedMessage.SentBy,
 			); err != nil {
 				c.Status(http.StatusInternalServerError)
