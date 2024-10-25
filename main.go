@@ -50,6 +50,7 @@ func main() {
 	// User friends
 	friendsRouter := apiV0.Group("/friends")
 	friendsRouter.POST("/", friends.GetFriends(session))
+	friendsRouter.POST("/remove", friends.RemoveFriend(session))
 	friendsRouter.POST("/sendRequest", friends.SendRequest(session))
 
 	messagesRouter := apiV0.Group("/messages")
