@@ -48,6 +48,17 @@ func SendRequest(session *gocql.Session) gin.HandlerFunc {
 							c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#005 - " + err.Error()})
 							return
 						}
+					} else {
+						delete(sender.friends, target.userId)
+						if err := session.Query(`UPDATE users SET friends = ? WHERE createdat = ? AND user_id = ? AND username = ?`, sender.friends, sender.createdat, sender.userId, sender.username).Exec(); err != nil {
+							c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#004 - " + err.Error()})
+							return
+						}
+						delete(target.friends, sender.userId)
+						if err := session.Query(`UPDATE users SET friends = ? WHERE createdat = ? AND user_id = ? AND username = ?`, target.friends, target.createdat, target.userId, target.username).Exec(); err != nil {
+							c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#005 - " + err.Error()})
+							return
+						}
 					}
 				} else {
 					c.Status(http.StatusBadRequest)
