@@ -32,12 +32,12 @@ func main() {
 	router := gin.Default()
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
-	apiV0 := router.Group("/v0")
+	apiV0 := router.Group("/api/v0")
 	// User login/register
 	usersRouter := apiV0.Group("/users")
 	usersRouter.POST("/register", users.SaveUser(session))
