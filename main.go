@@ -4,6 +4,7 @@ import (
 	"backend-joltamp/friends"
 	"backend-joltamp/messages"
 	"backend-joltamp/users"
+	"log"
 	"os"
 
 	"github.com/gin-contrib/cors"
@@ -39,6 +40,12 @@ func main() {
 	}))
 	apiV0 := router.Group("/api/v0")
 	// User login/register
+
+	apiV0.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "All services working as usual!"})
+		return
+	})
+
 	usersRouter := apiV0.Group("/users")
 	usersRouter.POST("/register", users.SaveUser(session))
 	usersRouter.POST("/login", users.GetUser(session))
@@ -58,9 +65,17 @@ func main() {
 	messagesRouter.POST("/send", messages.SendMessage(session))
 	if os.Getenv("RUN_AS_HTTPS") == "true" {
 		println("Running as HTTPS")
-		router.RunTLS(os.Getenv("BACKEND_RUN_IP")+":"+os.Getenv("BACKEND_RUN_PORT"), os.Getenv("BACKEND_CERT"), os.Getenv("BACKEND_KEY"))
+		err := router.RunTLS(os.Getenv("BACKEND_RUN_IP")+":"+os.Getenv("BACKEND_RUN_PORT"), os.Getenv("BACKEND_CERT"), os.Getenv("BACKEND_KEY"))
+		if err != nil {
+			log.Fatalln(err.Error())
+			return
+		}
 	} else {
 		println("Running as HTTP")
-		router.Run(os.Getenv("BACKEND_RUN_IP") + ":" + os.Getenv("BACKEND_RUN_PORT"))
+		err := router.Run(os.Getenv("BACKEND_RUN_IP") + ":" + os.Getenv("BACKEND_RUN_PORT"))
+		if err != nil {
+			log.Fatalln(err.Error())
+			return
+		}
 	}
 }
