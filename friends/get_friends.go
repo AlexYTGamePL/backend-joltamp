@@ -7,7 +7,7 @@ import (
 )
 
 type user struct {
-	Status          *int8        `json:"friendstatus,omitempty"`
+	FriendStatus    *int8        `json:"friendstatus,omitempty"`
 	Createdat       string       `json:"createdat"`
 	UserId          gocql.UUID   `json:"user_id"`
 	Username        string       `json:"username"`
@@ -15,6 +15,7 @@ type user struct {
 	Displayname     string       `json:"displayname"`
 	BannerColor     string       `json:"bannercolor"`
 	BackgroundColor string       `json:"backgroundcolor"`
+	Status          int8         `json:"status"`
 }
 
 func GetFriends(session *gocql.Session) gin.HandlerFunc {
@@ -33,7 +34,7 @@ func GetFriends(session *gocql.Session) gin.HandlerFunc {
 			for uuid, status := range friends {
 				var userDetail user
 				if err := session.Query(
-					`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor FROM users WHERE user_id = ? ALLOW FILTERING`,
+					`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor, status FROM users WHERE user_id = ? ALLOW FILTERING`,
 					uuid,
 				).Scan(
 					&userDetail.Createdat,
@@ -43,11 +44,12 @@ func GetFriends(session *gocql.Session) gin.HandlerFunc {
 					&userDetail.Displayname,
 					&userDetail.BannerColor,
 					&userDetail.BackgroundColor,
+					&userDetail.Status,
 				); err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 					return
 				} else {
-					userDetail.Status = &status
+					userDetail.FriendStatus = &status
 					result[userDetail.UserId] = userDetail
 				}
 				continue
