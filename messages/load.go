@@ -23,7 +23,7 @@ type Message struct {
 	ServerId   string
 	TargetId   string
 	SentAt     string
-	SentAtTime time.Time
+	SentAtTime int64
 	MessageId  gocql.UUID
 	Content    string
 	Edited     bool
@@ -37,11 +37,10 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jwt := c.GetHeader("Authorization")
 		if ret := security.VerifyJWT(jwt, session); ret.Status {
-			var messages []Message
 			var body struct {
 				Target gocql.UUID  `json:"target"`
 				Server *gocql.UUID `json:"server"`
-				Latest *string     `json:"latest"`
+				Latest *int64     `json:"latest"`
 			}
 			if err := c.BindJSON(&body); err != nil {
 				c.Status(http.StatusBadRequest)
@@ -61,12 +60,12 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 			}
 			var iter *gocql.Iter
 			if body.Latest != nil {
-				latest, _ := time.Parse(time.RFC3339, *body.Latest)
-				println(latest.Format("2006-01-02 15:04:05.999"))
-				iter = session.Query(`SELECT * FROM messages WHERE target_id = ? AND server_id = ? AND sent_at_time > ? LIMIT 50`, target, server, latest.Format("2006-01-02 15:04:05.999")).Iter()
+				iter = session.Query(`SELECT * FROM messages WHERE target_id = ? AND server_id = ? AND sent_at_time < ? LIMIT 50 ALLOW FILTERING`, target, server, body.Latest).Iter()
 			} else {
 				iter = session.Query(`SELECT * FROM messages WHERE target_id = ? AND server_id = ? LIMIT 50`, target, server).Iter()
 			}
+			var messages []Message
+			println(iter.NumRows())
 			for {
 				var msg Message
 

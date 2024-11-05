@@ -5,13 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
 	"net/http"
-	"time"
 )
 
 func SendMessage(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		jwt := c.GetHeader("Authorization")
 		if ret := security.VerifyJWT(jwt, session); ret.Status {
+
 			var body struct {
 				Target  gocql.UUID  `json:"target"`
 				Server  *gocql.UUID `json:"server"`
@@ -22,6 +22,14 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 				c.Status(http.StatusBadRequest)
 				return
 			}
+
+			// Checking if user isnt trying to send message to yourself
+			if body.Target == ret.User.UserId{
+				c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "You cant message yourself"})
+				return
+			}
+
+			// Checking if user is sending message on dm/server
 			var target string
 			if body.Server == nil {
 				target = CombineUUIDs(ret.User.UserId, body.Target)
@@ -30,14 +38,15 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 			}
 
 			messageId, _ := gocql.RandomUUID()
-			timeVar := time.Now().UTC()
-			if err := session.Query(`INSERT INTO messages (server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, reply, sent_by) VALUES (?, ?, toDate(now()), ?, ?, ?, false, null, ?, ?)`, func() string {
+
+			// Sending a message with self-running functions
+			if err := session.Query(`INSERT INTO messages (server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, reply, sent_by) VALUES (?, ?, toDate(now()), toTimeStamp(now()), ?, ?, false, null, ?, ?)`, func() string {
 				if body.Server != nil {
 					return body.Server.String()
 				} else {
 					return ""
 				}
-			}(), target, timeVar, messageId, body.Content, func() string {
+			}(), target, messageId, body.Content, func() string {
 				if body.Reply != nil {
 					return body.Reply.String()
 				} else {
@@ -49,11 +58,12 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 				return
 			}
 
+			// Sending back message
 			var insertedMessage struct {
 				ServerId   string
 				TargetId   string
 				SentAt     string
-				SentAtTime time.Time
+				SentAtTime int64
 				MessageId  gocql.UUID
 				Content    string
 				Edited     bool
@@ -81,6 +91,9 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 			}
 
 			c.JSON(200, insertedMessage)
+		}else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad JWT token!"})
+			return
 		}
 	}
 }

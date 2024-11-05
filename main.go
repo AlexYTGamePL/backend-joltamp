@@ -63,16 +63,27 @@ func main() {
 	messagesRouter := apiV0.Group("/messages")
 	messagesRouter.POST("/", messages.LoadMessages(session))
 	messagesRouter.POST("/send", messages.SendMessage(session))
+	messagesRouter.POST("/delete", messages.DeleteMessage(session))
+
+	// Starting REST API on HTTPS or HTTP depending on .env variable
 	if os.Getenv("RUN_AS_HTTPS") == "true" {
+
+		// Running on HTTPS
 		println("Running as HTTPS")
 		err := router.RunTLS(os.Getenv("BACKEND_RUN_IP")+":"+os.Getenv("BACKEND_RUN_PORT"), os.Getenv("BACKEND_CERT"), os.Getenv("BACKEND_KEY"))
+
+		// Error handling
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
 		}
 	} else {
+
+		// Running on HTTP
 		println("Running as HTTP")
 		err := router.Run(os.Getenv("BACKEND_RUN_IP") + ":" + os.Getenv("BACKEND_RUN_PORT"))
+
+		// Error handling
 		if err != nil {
 			log.Fatalln(err.Error())
 			return

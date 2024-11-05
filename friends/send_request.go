@@ -13,6 +13,15 @@ type friendsUser struct {
 	friends   map[gocql.UUID]int8
 }
 
+/*
+
+	Friend status:
+	0 - Sender / Requester
+	1 - Requested
+	2 - Friends
+
+*/
+
 func SendRequest(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request struct {
@@ -34,10 +43,20 @@ func SendRequest(session *gocql.Session) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#003 - " + err.Error()})
 			return
 		}
+
+		// Checking if target is already in sender's friends
 		if ele, exists := sender.friends[target.userId]; exists {
+
+			// Checking friend status
 			if ele == 1 && target.friends[sender.userId] == 0 {
+
+				// Checking if user is taking any action
 				if request.Action != nil {
+
+					// Checking what action type it is
 					if *request.Action {
+
+						// Accepting friend request
 						sender.friends[target.userId] = 2
 						if err := session.Query(`UPDATE users SET friends = ? WHERE createdat = ? AND user_id = ? AND username = ?`, sender.friends, sender.createdat, sender.userId, sender.username).Exec(); err != nil {
 							c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#004 - " + err.Error()})
@@ -49,6 +68,8 @@ func SendRequest(session *gocql.Session) gin.HandlerFunc {
 							return
 						}
 					} else {
+
+						// Removing friend request
 						delete(sender.friends, target.userId)
 						if err := session.Query(`UPDATE users SET friends = ? WHERE createdat = ? AND user_id = ? AND username = ?`, sender.friends, sender.createdat, sender.userId, sender.username).Exec(); err != nil {
 							c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#004 - " + err.Error()})
@@ -68,6 +89,8 @@ func SendRequest(session *gocql.Session) gin.HandlerFunc {
 				return
 			}
 		} else {
+
+			// Sending request
 			if err := session.Query(`UPDATE users SET friends = friends + {?: ?} WHERE createdat = ? AND user_id = ? AND username = ?`, target.userId, 0, sender.createdat, sender.userId, sender.username).Exec(); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "friendsRequest#006 - " + err.Error()})
 				return
