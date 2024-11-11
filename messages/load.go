@@ -93,7 +93,12 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 				}
 				messages = append(messages, msg)
 			}
-			c.JSON(http.StatusOK, messages)
+			reversedMessages := make([]Message, len(messages))
+			for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+				reversedMessages[i] = messages[j]
+				reversedMessages[j] = messages[i]
+			}
+			c.JSON(http.StatusOK, reversedMessages)
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad JWT token!"})
 			return
