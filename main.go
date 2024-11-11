@@ -4,6 +4,7 @@ import (
 	"backend-joltamp/friends"
 	"backend-joltamp/messages"
 	"backend-joltamp/users"
+	"backend-joltamp/websockets"
 	"log"
 	"os"
 
@@ -64,6 +65,9 @@ func main() {
 	messagesRouter.POST("/", messages.LoadMessages(session))
 	messagesRouter.POST("/send", messages.SendMessage(session))
 	messagesRouter.POST("/delete", messages.DeleteMessage(session))
+
+	webSocket := apiV0.Group("/ws")
+	webSocket.GET("/", websockets.WebsocketHandler(session))
 
 	// Starting REST API on HTTPS or HTTP depending on .env variable
 	if os.Getenv("RUN_AS_HTTPS") == "true" {

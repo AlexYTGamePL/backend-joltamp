@@ -2,36 +2,11 @@ package messages
 
 import (
 	"backend-joltamp/security"
+	"backend-joltamp/types"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
 	"net/http"
-	"time"
 )
-
-type ReplyBodyType struct {
-	ServerId   string
-	TargetId   string
-	SentAt     string
-	SentAtTime time.Time
-	MessageId  gocql.UUID
-	Content    string
-	Edited     bool
-	Reactions  map[gocql.UUID]string
-	SentBy     gocql.UUID
-}
-type Message struct {
-	ServerId   string
-	TargetId   string
-	SentAt     string
-	SentAtTime int64
-	MessageId  gocql.UUID
-	Content    string
-	Edited     bool
-	Reactions  map[gocql.UUID]string
-	Reply      string
-	SentBy     gocql.UUID
-	ReplyBody  *ReplyBodyType
-}
 
 func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -64,10 +39,10 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 			} else {
 				iter = session.Query(`SELECT * FROM messages WHERE target_id = ? AND server_id = ? LIMIT 50`, target, server).Iter()
 			}
-			var messages []Message
+			var messages []types.Message
 			println(iter.NumRows())
 			for {
-				var msg Message
+				var msg types.Message
 
 				// Scan the current row into msg
 				if !iter.Scan(&msg.ServerId, &msg.TargetId, &msg.SentAt, &msg.SentAtTime, &msg.MessageId, &msg.Content, &msg.Edited, &msg.Reactions, &msg.Reply, &msg.SentBy) {
@@ -75,7 +50,7 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 				}
 				if msg.Reply != "" {
 					if msg.ReplyBody == nil {
-						msg.ReplyBody = &ReplyBodyType{}
+						msg.ReplyBody = &types.ReplyBodyType{}
 					}
 					if err := session.Query(`SELECT server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, sent_by FROM messages WHERE target_id = ? AND server_id = ? AND message_id = ? ALLOW FILTERING`, target, server, msg.Reply).Scan(
 						&msg.ReplyBody.ServerId,
@@ -93,7 +68,7 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 				}
 				messages = append(messages, msg)
 			}
-			reversedMessages := make([]Message, len(messages))
+			reversedMessages := make([]types.Message, len(messages))
 			for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
 				reversedMessages[i] = messages[j]
 				reversedMessages[j] = messages[i]

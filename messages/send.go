@@ -2,10 +2,25 @@ package messages
 
 import (
 	"backend-joltamp/security"
+	"backend-joltamp/types"
+	"backend-joltamp/websockets"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
 	"net/http"
 )
+
+type ReplyBodyType_Send struct{
+	ServerId   string
+	TargetId   string
+	SentAt     string
+	SentAtTime int64
+	MessageId  gocql.UUID
+	Content    string
+	Edited     bool
+	Reactions  map[gocql.UUID]string
+	Reply      string
+	SentBy     gocql.UUID
+}
 
 func SendMessage(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -30,23 +45,25 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 			}
 
 			// Checking if user is sending message on dm/server
-			var target string
-			if body.Server == nil {
-				target = CombineUUIDs(ret.User.UserId, body.Target)
-			} else {
-				target = body.Target.String()
-			}
-
-			messageId, _ := gocql.RandomUUID()
-
-			// Sending a message with self-running functions
-			if err := session.Query(`INSERT INTO messages (server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, reply, sent_by) VALUES (?, ?, toDate(now()), toTimeStamp(now()), ?, ?, false, null, ?, ?)`, func() string {
+			target := func() string {
+				if body.Server != nil {
+					return body.Server.String()
+				} else {
+					return CombineUUIDs(ret.User.UserId, body.Target)
+				}
+			}()
+			server := func() string {
 				if body.Server != nil {
 					return body.Server.String()
 				} else {
 					return ""
 				}
-			}(), target, messageId, body.Content, func() string {
+			}()
+
+			messageId, _ := gocql.RandomUUID()
+
+			// Sending a message with self-running functions
+			if err := session.Query(`INSERT INTO messages (server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, reply, sent_by) VALUES (?, ?, toDate(now()), toTimeStamp(now()), ?, ?, false, null, ?, ?)`, server, target, messageId, body.Content, func() string {
 				if body.Reply != nil {
 					return body.Reply.String()
 				} else {
@@ -59,21 +76,10 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 			}
 
 			// Sending back message
-			var insertedMessage struct {
-				ServerId   string
-				TargetId   string
-				SentAt     string
-				SentAtTime int64
-				MessageId  gocql.UUID
-				Content    string
-				Edited     bool
-				Reactions  map[gocql.UUID]string
-				Reply      string
-				SentBy     gocql.UUID
-			}
+			var insertedMessage types.Message
 
 			insertedMessageId := messageId
-			if err := session.Query(`SELECT * FROM messages WHERE server_id = '' AND target_id = ? AND message_id = ? ALLOW FILTERING`, target, insertedMessageId).Scan(
+			if err := session.Query(`SELECT * FROM messages WHERE server_id = ? AND target_id = ? AND message_id = ? ALLOW FILTERING`, server, target, insertedMessageId).Scan(
 				&insertedMessage.ServerId,
 				&insertedMessage.TargetId,
 				&insertedMessage.SentAt,
@@ -90,6 +96,28 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 				return
 			}
 
+			if insertedMessage.Reply != ""{
+				insertedMessage.ReplyBody = &types.ReplyBodyType{}
+				if err := session.Query(`SELECT server_id, target_id, sent_at, sent_at_time, message_id, content, edited, reactions, sent_by FROM messages WHERE server_id = ? AND target_id = ? AND message_id = ? ALLOW FILTERING`, server, target, insertedMessage.Reply).Scan(
+					&insertedMessage.ReplyBody.ServerId,
+					&insertedMessage.ReplyBody.TargetId,
+					&insertedMessage.ReplyBody.SentAt,
+					&insertedMessage.ReplyBody.SentAtTime,
+					&insertedMessage.ReplyBody.MessageId,
+					&insertedMessage.ReplyBody.Content,
+					&insertedMessage.ReplyBody.Edited,
+					&insertedMessage.ReplyBody.Reactions,
+					&insertedMessage.ReplyBody.SentBy,
+				); err != nil{
+					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+					println(err.Error())
+					return
+				}
+			}
+
+			if body.Server == nil{
+				websockets.HandleMessageSendWS(server, body.Target.String(), insertedMessage)
+			}
 			c.JSON(200, insertedMessage)
 		}else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad JWT token!"})
