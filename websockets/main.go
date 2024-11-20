@@ -30,10 +30,18 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 		defer wsConn.Close()
 		jwt, err := gocql.ParseUUID(c.GetHeader("Authorization"))
 		if err != nil{
+			wsConn.WriteJSON(gin.H{
+				"type": "disconnacted",
+				"payload": "JWT cant be verified!",
+			})
 			return
 		}
 		ret := security.VerifyJWT(jwt.String(), session);
 		if !ret.Status{
+			wsConn.WriteJSON(gin.H{
+				"type": "disconnacted",
+				"payload": "Wrong JWT token",
+			})
 			return
 		}
 		mu.Lock()
