@@ -2,13 +2,14 @@ package messages
 
 import (
     "backend-joltamp/security"
+    "backend-joltamp/types"
     "backend-joltamp/websockets"
     "github.com/gin-gonic/gin"
     "github.com/gocql/gocql"
     "net/http"
 )
 
-func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
+func EditMessage(session *gocql.Session) gin.HandlerFunc {
     return func(c *gin.Context) {
         jwt := c.GetHeader("Authorization")
         if ret := security.VerifyJWT(jwt, session); ret.Status {
@@ -18,6 +19,7 @@ func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
                 Message    gocql.UUID  `json:"message"`
                 SentAt     string      `json:"sentat"`
                 SentAtTime int64       `json:"sentattime"`
+                Content string `json:"content"`
             }
 
             if err := c.BindJSON(&body); err != nil {
@@ -48,14 +50,16 @@ func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
                 }
 
                 if sentby != ret.User.UserId {
-                    c.JSON(http.StatusUnauthorized, gin.H{"error": "You cant delete message sent by someone else"})
+                    c.JSON(http.StatusUnauthorized, gin.H{"error": "You cant edit message sent by someone else"})
                     return
                 }
 
             } else {
                 target = body.Target.String()
             }
-            if err := session.Query(`DELETE FROM messages WHERE server_id = ? AND message_id = ? AND sent_at = ? AND target_id = ? AND sent_at_time = ?`,
+            if err := session.Query(`UPDATE messages SET content = ?, edited = ? WHERE server_id = ? AND message_id = ? AND sent_at = ? AND target_id = ? AND sent_at_time = ?`,
+                body.Content,
+                true,
                 server,
                 body.Message,
                 body.SentAt,
@@ -66,7 +70,14 @@ func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
                 return
             }
 
-            websockets.HandleMessageDeleteWS(server, body.Target.String(), body.Message);
+            websockets.HandleMessageEditWS(server, body.Target.String(), types.EditMessage{
+                ServerId:   server,
+                TargetId:   target,
+                SentAt:     body.SentAt,
+                SentAtTime: body.SentAtTime,
+                MessageId:  body.Message,
+                Content:    body.Content,
+            });
             c.Status(http.StatusOK)
             return
 
@@ -76,4 +87,3 @@ func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
         }
     }
 }
-

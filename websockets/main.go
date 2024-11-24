@@ -17,6 +17,7 @@ var upgrader = websocket.Upgrader{
 	HandshakeTimeout: 5000,
 }
 
+/* USER ID -> WS Conn */
 var ConnactedUsers = make(map[gocql.UUID]*websocket.Conn)
 var mu sync.Mutex
 
@@ -79,6 +80,31 @@ func HandleMessageSendWS(server string, target string, message types.Message){
 		if wsConn, exists := ConnactedUsers[targetUUID]; exists{
 			wsConn.WriteJSON(gin.H{
 				"type": "new_message",
+				"payload": message,
+			})
+		}
+	}
+}
+
+func HandleMessageDeleteWS(server string, target string, message gocql.UUID){
+	if server == ""{
+		targetUUID, _ := gocql.ParseUUID(target)
+		if wsConn, exists := ConnactedUsers[targetUUID]; exists{
+			wsConn.WriteJSON(gin.H{
+				"type": "delete_message",
+				"payload": message,
+			})
+		}
+	}
+}
+
+
+func HandleMessageEditWS(server string, target string, message types.EditMessage){
+	if server == ""{
+		targetUUID, _ := gocql.ParseUUID(target)
+		if wsConn, exists := ConnactedUsers[targetUUID]; exists{
+			wsConn.WriteJSON(gin.H{
+				"type": "edit_message",
 				"payload": message,
 			})
 		}

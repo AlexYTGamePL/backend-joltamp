@@ -29,3 +29,12 @@ type Message struct {
 	SentBy     gocql.UUID
 	ReplyBody  *ReplyBodyType
 }
+
+type EditMessage struct {
+	ServerId string
+	TargetId string
+	SentAt string
+	SentAtTime int64
+	MessageId gocql.UUID
+	Content string
+}
