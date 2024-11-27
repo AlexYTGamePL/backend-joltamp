@@ -40,7 +40,6 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 				iter = session.Query(`SELECT * FROM messages WHERE target_id = ? AND server_id = ? LIMIT 50`, target, server).Iter()
 			}
 			var messages []types.Message
-			println(iter.NumRows())
 			for {
 				var msg types.Message
 
