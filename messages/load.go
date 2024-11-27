@@ -70,8 +70,9 @@ func LoadMessages(session *gocql.Session) gin.HandlerFunc {
 			}
 			reversedMessages := make([]types.Message, len(messages))
 			if len(messages) > 1{
-				for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
+				for i, j := 0, len(messages)-1; i <= j; i, j = i+1, j-1 {
 					reversedMessages[i] = messages[j]
+					reversedMessages[j] = messages[i]
 				}
 			}else{
 				reversedMessages = messages
