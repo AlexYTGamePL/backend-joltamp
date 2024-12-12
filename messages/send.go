@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"backend-joltamp/analytics"
 	"backend-joltamp/security"
 	"backend-joltamp/types"
 	"backend-joltamp/websockets"
@@ -118,6 +119,7 @@ func SendMessage(session *gocql.Session) gin.HandlerFunc {
 			if body.Server == nil{
 				websockets.HandleMessageSendWS(server, body.Target.String(), insertedMessage)
 			}
+			analytics.OnSentMessage()
 			c.JSON(200, insertedMessage)
 		}else {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad JWT token!"})

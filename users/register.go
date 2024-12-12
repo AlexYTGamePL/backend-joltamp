@@ -1,6 +1,7 @@
 package users
 
 import (
+	"backend-joltamp/analytics"
 	"backend-joltamp/security"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
@@ -54,7 +55,7 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Server error db#001"})
 			return
 		}
-
+		analytics.OnRegisterAccount()
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Created",
 			"user": struct {

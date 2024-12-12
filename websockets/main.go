@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"backend-joltamp/analytics"
 	"backend-joltamp/security"
 	"backend-joltamp/types"
 	"github.com/gin-gonic/gin"
@@ -49,6 +50,7 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 		ConnactedUsers[ret.User.UserId] = wsConn
 		mu.Unlock()
 		fmt.Println("User connacted to socket")
+		analytics.OnWebsocketsConnect()
 		wsConn.WriteJSON(gin.H{
 			"type": "connacted",
 			"payload": "Connacted to ws",

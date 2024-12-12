@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend-joltamp/analytics"
 	"backend-joltamp/friends"
 	"backend-joltamp/messages"
 	"backend-joltamp/users"
@@ -72,7 +73,11 @@ func main() {
 	webSocket := apiV0.Group("/ws")
 	webSocket.GET("/", websockets.WebsocketHandler(session))
 
+	analyticsRouter := apiV0.Group("/analytics")
+	analyticsRouter.GET("/:days", analytics.LoadAnalytics(session))
+
 	// Starting REST API on HTTPS or HTTP depending on .env variable
+	analytics.Main(session);
 	if os.Getenv("RUN_AS_HTTPS") == "true" {
 
 		// Running on HTTPS
