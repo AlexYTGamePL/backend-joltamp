@@ -25,9 +25,10 @@ func GetSelfInfo(session *gocql.Session) gin.HandlerFunc {
 			Status          int          `json:"status"`
 			Desc string `json:"desc"`
 			Email string `json:"email"`
+			Profile []byte `json:"profile"`
 		}
 		if err := session.Query(
-			`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor, status, desc, email FROM users WHERE jwt = ? ALLOW FILTERING`,
+			`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor, status, desc, email, profile FROM users WHERE jwt = ? ALLOW FILTERING`,
 			JWT,
 		).Scan(
 			&user.Createdat,
@@ -40,6 +41,7 @@ func GetSelfInfo(session *gocql.Session) gin.HandlerFunc {
 			&user.Status,
 			&user.Desc,
 			&user.Email,
+			&user.Profile,
 		); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
