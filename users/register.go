@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
 	"net/http"
+	"strings"
 )
 
 func SaveUser(session *gocql.Session) gin.HandlerFunc {
@@ -27,7 +28,7 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Password is incorrect (>6)"})
 			return
 		}
-		if len(newUser.Email) <= 3 {
+		if len(newUser.Email) <= 3 && strings.Contains(newUser.Email, "@") {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Email is incorrect (>3)"})
 			return
 		}
