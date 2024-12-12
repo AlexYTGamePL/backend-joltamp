@@ -40,13 +40,13 @@ func main() {
 		AllowCredentials: true,
 	}))
 	apiV0 := router.Group("/api/v0")
-	// User login/register
 
 	apiV0.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "All services working as usual!"})
 		return
 	})
 
+	// Users routes
 	usersRouter := apiV0.Group("/users")
 	usersRouter.POST("/register", users.SaveUser(session))
 	usersRouter.POST("/login", users.GetUser(session))
@@ -54,9 +54,10 @@ func main() {
 	usersRouter.POST("/changeEmail", users.ChangeEmail(session))
 	usersRouter.GET("/isAdmin/:userId", users.IsAdmin(session))
 	usersRouter.GET("/getInfo/:userId", users.GetInfo(session))
+	usersRouter.POST("/getSelfInfo", users.GetSelfInfo(session))
 	usersRouter.POST("/setStatus", users.SetStatus(session))
 	usersRouter.POST("/changeSelfInfo", users.ChangeSelfInfo(session))
-	// User friends
+	// Friends routes
 	friendsRouter := apiV0.Group("/friends")
 	friendsRouter.POST("/", friends.GetFriends(session))
 	friendsRouter.POST("/remove", friends.RemoveFriend(session))
