@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 )
-
+// WebSocket upgrader with buffer sizes and handshake timeout
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -21,7 +21,7 @@ var upgrader = websocket.Upgrader{
 /* USER ID -> WS Conn */
 var ConnactedUsers = make(map[gocql.UUID]*websocket.Conn)
 var mu sync.Mutex
-
+// WebsocketHandler handles incoming WebSocket connection requests
 func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		wsConn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -30,6 +30,8 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 			return
 		}
 		defer wsConn.Close()
+
+		// Parse JWT from the Authorization header
 		jwt, err := gocql.ParseUUID(c.GetHeader("Authorization"))
 		if err != nil{
 			wsConn.WriteJSON(gin.H{
@@ -46,9 +48,12 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 			})
 			return
 		}
+		// Add user connection to the map
 		mu.Lock()
 		ConnactedUsers[ret.User.UserId] = wsConn
 		mu.Unlock()
+
+		// Log and notify the connection success
 		fmt.Println("User connacted to socket")
 		analytics.OnWebsocketsConnect()
 		wsConn.WriteJSON(gin.H{
@@ -56,6 +61,8 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 			"payload": "Connacted to ws",
 		})
 		fmt.Println(len(ConnactedUsers))
+
+		// Start a heartbeat ticker to keep the connection alive
 		func() {
 			ticker := time.NewTicker(10 * time.Second)
 			defer ticker.Stop()
@@ -75,7 +82,7 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 		}()
 	}
 }
-
+// HandleMessageSendWS sends a new message to the target user via WebSocket
 func HandleMessageSendWS(server string, target string, message types.Message){
 	if server == ""{
 		targetUUID, _ := gocql.ParseUUID(target)
@@ -88,6 +95,7 @@ func HandleMessageSendWS(server string, target string, message types.Message){
 	}
 }
 
+// HandleMessageDeleteWS notifies the target user of a deleted message
 func HandleMessageDeleteWS(server string, target string, message gocql.UUID){
 	if server == ""{
 		targetUUID, _ := gocql.ParseUUID(target)
@@ -100,7 +108,7 @@ func HandleMessageDeleteWS(server string, target string, message gocql.UUID){
 	}
 }
 
-
+// HandleMessageEditWS notifies the target user of an edited message
 func HandleMessageEditWS(server string, target string, message types.EditMessage){
 	if server == ""{
 		targetUUID, _ := gocql.ParseUUID(target)

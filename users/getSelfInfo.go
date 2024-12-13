@@ -9,24 +9,32 @@ import (
 
 func GetSelfInfo(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Extract JWT from the Authorization header
 		JWT := c.GetHeader("Authorization")
-			if ret := security.VerifyJWT(JWT, session); !ret.Status {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect JWT token."})
-				return
-			}
-		var user struct {
-			Createdat       string       `json:"createdat"`
-			UserId          gocql.UUID   `json:"user_id"`
-			Username        string       `json:"username"`
-			Badges          []gocql.UUID `json:"badges"`
-			Displayname     string       `json:"displayname"`
-			BannerColor     string       `json:"bannercolor"`
-			BackgroundColor string       `json:"backgroundcolor"`
-			Status          int          `json:"status"`
-			Desc string `json:"desc"`
-			Email string `json:"email"`
-			Profile []byte `json:"profile"`
+
+		// Verify the JWT token for authenticity
+		if ret := security.VerifyJWT(JWT, session); !ret.Status {
+			// Return 401 if the JWT is invalid
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect JWT token."})
+			return
 		}
+
+		// Define a structure to hold the user information
+		var user struct {
+			Createdat       string       `json:"createdat"`       // Timestamp of account creation
+			UserId          gocql.UUID   `json:"user_id"`         // Unique user identifier
+			Username        string       `json:"username"`        // Username
+			Badges          []gocql.UUID `json:"badges"`          // List of badge IDs
+			Displayname     string       `json:"displayname"`     // User's display name
+			BannerColor     string       `json:"bannercolor"`     // Color of the banner
+			BackgroundColor string       `json:"backgroundcolor"` // Background color of the profile
+			Status          int          `json:"status"`          // Status code (e.g., active, inactive)
+			Desc            string       `json:"desc"`            // User's description or bio
+			Email           string       `json:"email"`           // User's email address
+			Profile         []byte       `json:"profile"`         // Profile picture data in binary format
+		}
+
+		// Query the database to fetch the user's details based on the provided JWT
 		if err := session.Query(
 			`SELECT createdat, user_id, username, badges, displayname, bannercolor, backgroundcolor, status, desc, email, profile FROM users WHERE jwt = ? ALLOW FILTERING`,
 			JWT,
@@ -43,10 +51,14 @@ func GetSelfInfo(session *gocql.Session) gin.HandlerFunc {
 			&user.Email,
 			&user.Profile,
 		); err != nil {
+			// Handle errors during database query
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		// Return the user's information as a JSON response
 		c.JSON(http.StatusOK, user)
 		return
 	}
 }
+
