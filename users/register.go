@@ -20,7 +20,7 @@ func SaveUser(session *gocql.Session) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Incorrect body format"})
 			return
 		}
-
+		newUser.Email = strings.ToLower(newUser.Email)
 		if len(newUser.Username) <= 3 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Username is incorrect (>4)"})
 			return

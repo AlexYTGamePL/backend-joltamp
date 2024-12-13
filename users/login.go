@@ -3,6 +3,7 @@ package users
 import (
 	"backend-joltamp/security"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
@@ -19,6 +20,8 @@ func GetUser(session *gocql.Session) gin.HandlerFunc {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Incorrect body format"})
 			return
 		}
+		user.Email = strings.ToLower(user.Email)
+		println(user.Email)
 		if len(user.Email) <= 3 {
 			c.IndentedJSON(http.StatusBadRequest, gin.H{"error": "Email is incorrect"})
 			return
