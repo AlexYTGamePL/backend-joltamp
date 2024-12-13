@@ -1,6 +1,4 @@
-# backend-joltamp
-<hr>
-Code by Unko
+Code by UnkoR00T
 Code review by 23czapo
 
-Comments by ChatGPT (im a lazyass <3)
+Code comments by ChatGPT (im a lazy ass <3>)

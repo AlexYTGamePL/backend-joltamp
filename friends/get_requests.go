@@ -1,0 +1,3 @@
+package friends
+
+// Removed
