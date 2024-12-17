@@ -36,7 +36,7 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 		defer wsConn.Close()
 
 		// Parse JWT from the Authorization header
-		jwt, err := gocql.ParseUUID(c.GetHeader("Authorization"))
+		jwt, err := gocql.ParseUUID(c.Query("token"))
 		if err != nil{
 			wsConn.WriteJSON(gin.H{
 				"type": "disconnacted",
