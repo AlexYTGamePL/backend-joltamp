@@ -18,7 +18,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 	HandshakeTimeout: 5000,
 	CheckOrigin: func(r *http.Request) bool {
-		return r.Header.Get("Origin") == "https://joltamp.pl"
+		return true;
 	},
 }
 
