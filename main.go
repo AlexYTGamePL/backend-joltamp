@@ -72,6 +72,12 @@ func main() {
 	messagesRouter.POST("/edit", messages.EditMessage(session))
 
 	webSocket := apiV0.Group("/ws")
+	webSocket.OPTIONS("/", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*") // Allow all for testing
+		c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		c.Status(204) // No Content
+	})
 	webSocket.GET("/", websockets.WebsocketHandler(session))
 
 	analyticsRouter := apiV0.Group("/analytics")
