@@ -39,9 +39,6 @@ func main() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Access-Control-Allow-Origin"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		AllowOriginFunc: func(origin string) bool {
-			return true
-		},
 	}))
 	apiV0 := router.Group("/api/v0")
 
@@ -75,6 +72,12 @@ func main() {
 	messagesRouter.POST("/edit", messages.EditMessage(session))
 
 	webSocket := apiV0.Group("/ws")
+	webSocket.OPTIONS("/", func(c *gin.Context) {
+	    c.Header("Access-Control-Allow-Origin", "*")
+	    c.Header("Access-Control-Allow-Methods", "GET, POST")
+	    c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+	    c.Status(204) // No Content
+	})
 	webSocket.GET("/", websockets.WebsocketHandler(session))
 
 	analyticsRouter := apiV0.Group("/analytics")
