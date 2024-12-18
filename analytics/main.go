@@ -42,7 +42,7 @@ func SaveData(session *gocql.Session) {
 	now := time.Now()
 
 	// Execute the CQL query to insert the analytics data
-	if err := session.Query(`INSERT INTO analytics (day, messagescount, registercount, wsconnectcount) VALUES (?, ?, ?, ?)`,
+	if err := session.Query(`INSERT INTO analytics (id, messagescount, registercount, wsconnectcount) VALUES (0, ?, ?, ?, ?)`,
 		now.Format("2006-01-02"), SentMessagesCounter, RegisteredAccountsCounter, WebsocketsConnectionsCounter).Exec(); err != nil {
 		// Log a fatal error if the query fails
 		log.Fatalln("Error while inserting analytics!")
