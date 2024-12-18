@@ -30,7 +30,7 @@ func LoadAnalytics(session *gocql.Session) gin.HandlerFunc {
 		daysCount := c.Param("days")
 
 		// Query the database for analytics data with a limit based on the number of days
-		iter := session.Query(`SELECT * FROM analytics LIMIT ?`, daysCount).Iter()
+		iter := session.Query(`SELECT day, messagescount, registercount, wsconnectcount FROM analytics WHERE id = 0 LIMIT ? ALLOW FILTERING`, daysCount).Iter()
 
 		// Prepare a slice to hold all analytics data
 		var allData []DataLogs
