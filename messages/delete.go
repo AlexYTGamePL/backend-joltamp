@@ -2,6 +2,7 @@ package messages
 
 import (
     "backend-joltamp/security"
+    "backend-joltamp/types"
     "backend-joltamp/websockets"
     "github.com/gin-gonic/gin"
     "github.com/gocql/gocql"
@@ -66,7 +67,13 @@ func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
                 return
             }
 
-            websockets.HandleMessageDeleteWS(server, body.Target.String(), body);
+            websockets.HandleMessageDeleteWS(server, body.Target.String(), types.DeleteMessage{
+                TargetId: target,
+                ServerId: body.Server,
+                MessageId: body.Message,
+                SentAt: body.SentAt,
+                SentAtTime: body.SentAtTime,
+            });
             c.Status(http.StatusOK)
             return
 

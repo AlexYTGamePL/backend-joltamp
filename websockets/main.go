@@ -103,31 +103,13 @@ func HandleMessageSendWS(server string, target string, message types.Message) {
 }
 
 // HandleMessageDeleteWS notifies the target user of a deleted message
-func HandleMessageDeleteWS(server string, target string, message struct {
-	Target     gocql.UUID  `json:"target"`
-	Server     *gocql.UUID `json:"server"`
-	Message    gocql.UUID  `json:"message"`
-	SentAt     string      `json:"sentat"`
-	SentAtTime int64       `json:"sentattime"`
-}) {
+func HandleMessageDeleteWS(server string, target string, message types.DeleteMessage) {
 	if server == "" {
 		targetUUID, _ := gocql.ParseUUID(target)
 		if wsConn, exists := ConnactedUsers[targetUUID]; exists {
 			wsConn.WriteJSON(gin.H{
 				"type":    "delete_message",
-				"payload": struct {
-					TargetId     gocql.UUID  `json:"TargetId"`
-					ServerId     *gocql.UUID `json:"ServerId"`
-					MessageId    gocql.UUID  `json:"MessageId"`
-					SentAt     string      `json:"SentAt"`
-					SentAtTime int64       `json:"SentAtTime"`
-				}{
-					TargetId: message.Target,
-					ServerId: message.Server,
-					MessageId: message.Message,
-					SentAt: message.SentAt,
-					SentAtTime: message.SentAtTime,
-				},
+				"payload": message,
 			})
 		}
 	}
