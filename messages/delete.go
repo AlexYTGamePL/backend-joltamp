@@ -66,7 +66,7 @@ func DeleteMessage(session *gocql.Session) gin.HandlerFunc {
                 return
             }
 
-            websockets.HandleMessageDeleteWS(server, body.Target.String(), body.Message);
+            websockets.HandleMessageDeleteWS(server, body.Target.String(), body);
             c.Status(http.StatusOK)
             return
 

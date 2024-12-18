@@ -12,19 +12,21 @@ import (
 	"sync"
 	"time"
 )
+
 // WebSocket upgrader with buffer sizes and handshake timeout
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	ReadBufferSize:   1024,
+	WriteBufferSize:  1024,
 	HandshakeTimeout: 5000,
 	CheckOrigin: func(r *http.Request) bool {
-		return true;
+		return true
 	},
 }
 
 /* USER ID -> WS Conn */
 var ConnactedUsers = make(map[gocql.UUID]*websocket.Conn)
 var mu sync.Mutex
+
 // WebsocketHandler handles incoming WebSocket connection requests
 func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -37,17 +39,17 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 
 		// Parse JWT from the Authorization header
 		jwt, err := gocql.ParseUUID(c.Query("token"))
-		if err != nil{
+		if err != nil {
 			wsConn.WriteJSON(gin.H{
-				"type": "disconnacted",
+				"type":    "disconnacted",
 				"payload": "JWT cant be verified!",
 			})
 			return
 		}
-		ret := security.VerifyJWT(jwt.String(), session);
-		if !ret.Status{
+		ret := security.VerifyJWT(jwt.String(), session)
+		if !ret.Status {
 			wsConn.WriteJSON(gin.H{
-				"type": "disconnacted",
+				"type":    "disconnacted",
 				"payload": "Wrong JWT token",
 			})
 			return
@@ -61,7 +63,7 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 		fmt.Println("User connacted to socket")
 		analytics.OnWebsocketsConnect()
 		wsConn.WriteJSON(gin.H{
-			"type": "connacted",
+			"type":    "connacted",
 			"payload": "Connacted to ws",
 		})
 		fmt.Println(len(ConnactedUsers))
@@ -72,12 +74,12 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 			defer ticker.Stop()
 
 			for {
-				<- ticker.C
+				<-ticker.C
 				err := wsConn.WriteJSON(gin.H{
-					"type": "heartbeat",
+					"type":    "heartbeat",
 					"payload": nil,
 				})
-				if err != nil{
+				if err != nil {
 					fmt.Println("User disconnacted from socket")
 					delete(ConnactedUsers, ret.User.UserId)
 					return
@@ -86,13 +88,14 @@ func WebsocketHandler(session *gocql.Session) gin.HandlerFunc {
 		}()
 	}
 }
+
 // HandleMessageSendWS sends a new message to the target user via WebSocket
-func HandleMessageSendWS(server string, target string, message types.Message){
-	if server == ""{
+func HandleMessageSendWS(server string, target string, message types.Message) {
+	if server == "" {
 		targetUUID, _ := gocql.ParseUUID(target)
-		if wsConn, exists := ConnactedUsers[targetUUID]; exists{
+		if wsConn, exists := ConnactedUsers[targetUUID]; exists {
 			wsConn.WriteJSON(gin.H{
-				"type": "new_message",
+				"type":    "new_message",
 				"payload": message,
 			})
 		}
@@ -100,12 +103,18 @@ func HandleMessageSendWS(server string, target string, message types.Message){
 }
 
 // HandleMessageDeleteWS notifies the target user of a deleted message
-func HandleMessageDeleteWS(server string, target string, message gocql.UUID){
-	if server == ""{
+func HandleMessageDeleteWS(server string, target string, message struct {
+	Target     gocql.UUID  `json:"target"`
+	Server     *gocql.UUID `json:"server"`
+	Message    gocql.UUID  `json:"message"`
+	SentAt     string      `json:"sentat"`
+	SentAtTime int64       `json:"sentattime"`
+}) {
+	if server == "" {
 		targetUUID, _ := gocql.ParseUUID(target)
-		if wsConn, exists := ConnactedUsers[targetUUID]; exists{
+		if wsConn, exists := ConnactedUsers[targetUUID]; exists {
 			wsConn.WriteJSON(gin.H{
-				"type": "delete_message",
+				"type":    "delete_message",
 				"payload": message,
 			})
 		}
@@ -113,12 +122,12 @@ func HandleMessageDeleteWS(server string, target string, message gocql.UUID){
 }
 
 // HandleMessageEditWS notifies the target user of an edited message
-func HandleMessageEditWS(server string, target string, message types.EditMessage){
-	if server == ""{
+func HandleMessageEditWS(server string, target string, message types.EditMessage) {
+	if server == "" {
 		targetUUID, _ := gocql.ParseUUID(target)
-		if wsConn, exists := ConnactedUsers[targetUUID]; exists{
+		if wsConn, exists := ConnactedUsers[targetUUID]; exists {
 			wsConn.WriteJSON(gin.H{
-				"type": "edit_message",
+				"type":    "edit_message",
 				"payload": message,
 			})
 		}
