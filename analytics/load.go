@@ -1,10 +1,8 @@
 package analytics
 
 import (
-	"backend-joltamp/security"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
-	"net/http"
 )
 
 type DataLogs struct {
