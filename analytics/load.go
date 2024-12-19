@@ -16,16 +16,6 @@ type DataLogs struct {
 
 func LoadAnalytics(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract JWT from the Authorization header
-		JWT := c.GetHeader("Authorization")
-
-		// Verify the JWT token for authenticity
-		if ret := security.VerifyJWT(JWT, session); !ret.Status {
-			// Return 401 if the JWT is invalid
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect JWT token."})
-			return
-		}
-
 		// Extract the number of days parameter from the request
 		daysCount := c.Param("days")
 
