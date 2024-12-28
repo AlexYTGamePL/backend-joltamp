@@ -36,7 +36,7 @@ func main() {
 	router.Use(cors.New(cors.Config{
 		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Access-Control-Allow-Origin"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
@@ -55,6 +55,7 @@ func main() {
 	usersRouter.POST("/changeEmail", users.ChangeEmail(session))
 	usersRouter.GET("/isAdmin/:userId", users.IsAdmin(session))
 	usersRouter.GET("/getInfo/:userId", users.GetInfo(session))
+	usersRouter.POST("/getInfo/:userId", users.GetInfo(session))
 	usersRouter.POST("/getSelfInfo", users.GetSelfInfo(session))
 	usersRouter.POST("/setStatus", users.SetStatus(session))
 	usersRouter.POST("/changeSelfInfo", users.ChangeSelfInfo(session))
@@ -72,6 +73,12 @@ func main() {
 	messagesRouter.POST("/edit", messages.EditMessage(session))
 
 	webSocket := apiV0.Group("/ws")
+	webSocket.OPTIONS("/", func(c *gin.Context) {
+	    c.Header("Access-Control-Allow-Origin", "*")
+	    c.Header("Access-Control-Allow-Methods", "GET, POST")
+	    c.Header("Access-Control-Allow-Headers", "Authorization, Content-Type")
+	    c.Status(204) // No Content
+	})
 	webSocket.GET("/", websockets.WebsocketHandler(session))
 
 	analyticsRouter := apiV0.Group("/analytics")

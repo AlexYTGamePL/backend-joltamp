@@ -38,3 +38,11 @@ type EditMessage struct {
 	MessageId gocql.UUID
 	Content string
 }
+
+type DeleteMessage struct {
+	TargetId     string  `json:"TargetId"`
+	ServerId     *gocql.UUID `json:"ServerId"`
+	MessageId    gocql.UUID  `json:"MessageId"`
+	SentAt     string      `json:"SentAt"`
+	SentAtTime int64       `json:"SentAtTime"`
+}

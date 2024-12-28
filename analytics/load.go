@@ -1,10 +1,8 @@
 package analytics
 
 import (
-	"backend-joltamp/security"
 	"github.com/gin-gonic/gin"
 	"github.com/gocql/gocql"
-	"net/http"
 )
 
 type DataLogs struct {
@@ -16,21 +14,11 @@ type DataLogs struct {
 
 func LoadAnalytics(session *gocql.Session) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Extract JWT from the Authorization header
-		JWT := c.GetHeader("Authorization")
-
-		// Verify the JWT token for authenticity
-		if ret := security.VerifyJWT(JWT, session); !ret.Status {
-			// Return 401 if the JWT is invalid
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Incorrect JWT token."})
-			return
-		}
-
 		// Extract the number of days parameter from the request
 		daysCount := c.Param("days")
 
 		// Query the database for analytics data with a limit based on the number of days
-		iter := session.Query(`SELECT * FROM analytics LIMIT ?`, daysCount).Iter()
+		iter := session.Query(`SELECT day, messagescount, registercount, wsconnectcount FROM analytics WHERE id = 0 LIMIT ? ALLOW FILTERING`, daysCount).Iter()
 
 		// Prepare a slice to hold all analytics data
 		var allData []DataLogs

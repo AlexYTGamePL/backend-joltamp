@@ -19,7 +19,7 @@ func GetInfo(session *gocql.Session) gin.HandlerFunc {
 		// Check if the 'userId' parameter is provided
 		if target == "" {
 			// Return an error if 'userId' is not provided in the URL
-			c.JSON(http.StatusBadRequest, gin.H{"error": "userId parameter is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "GetInfo#001 " +"userId parameter is required"})
 			return
 		}
 
@@ -27,7 +27,7 @@ func GetInfo(session *gocql.Session) gin.HandlerFunc {
 		err := c.BindJSON(&body)
 		if err != nil {
 			// Return an error if there’s an issue with the JSON format
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "GetInfo#002 " + err.Error()})
 			return
 		}
 
@@ -65,7 +65,7 @@ func GetInfo(session *gocql.Session) gin.HandlerFunc {
 				&user.Profile,
 			); err != nil {
 				// Return an error if there is an issue with the database query
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "GetInfo#003 " +err.Error()})
 				return
 			}
 		} else {
@@ -86,7 +86,7 @@ func GetInfo(session *gocql.Session) gin.HandlerFunc {
 				&user.Desc,
 			); err != nil {
 				// Return an error if there is an issue with the database query
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				c.JSON(http.StatusBadRequest, gin.H{"error":"GetInfo#004 " + err.Error()})
 				return
 			}
 		}
