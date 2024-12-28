@@ -55,6 +55,7 @@ func main() {
 	usersRouter.POST("/changeEmail", users.ChangeEmail(session))
 	usersRouter.GET("/isAdmin/:userId", users.IsAdmin(session))
 	usersRouter.GET("/getInfo/:userId", users.GetInfo(session))
+	usersRouter.POST("/getInfo/:userId", users.GetInfo(session))
 	usersRouter.POST("/getSelfInfo", users.GetSelfInfo(session))
 	usersRouter.POST("/setStatus", users.SetStatus(session))
 	usersRouter.POST("/changeSelfInfo", users.ChangeSelfInfo(session))
