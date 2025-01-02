@@ -2,11 +2,9 @@ use std::sync::Arc;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
-use scylla::{QueryResult, Session};
-use scylla::transport::errors::QueryError;
-use scylla::transport::query_result::IntoRowsResultError;
+use scylla::Session;
 use serde::{Deserialize, Serialize};
-use serde::de::{Error, StdError};
+use serde::de::StdError;
 use uuid::Uuid;
 use crate::security::passwords::hash_password;
 
@@ -55,22 +53,22 @@ pub async fn register(
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(ReturnType::Error(RegisterError { message: String::from("register#0x01 Internal server error")})));
     }
     if let Ok(user) = insert_user(&session, &mut payload).await{
-        return (StatusCode::CREATED, Json(ReturnType::ReturnUser(ReturnUser{
+        (StatusCode::CREATED, Json(ReturnType::ReturnUser(ReturnUser{
             jwt: user.0.to_string(),
             user_id: user.1.to_string(),
-        })));
+        })))
     }else{
-        return (StatusCode::INTERNAL_SERVER_ERROR, Json(ReturnType::Error(RegisterError { message: String::from("register#0x02 Internal server error")})));
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(ReturnType::Error(RegisterError { message: String::from("register#0x02 Internal server error")})))
     }
 }
 
 async fn check_username_free(session: &Arc<Session>, username: &String) -> Result<bool, Box<dyn StdError>> {
     let result = session.query_unpaged("SELECT user_id FROM joltamp.users WHERE username = ? ALLOW FILTERING", (username, )).await?.into_rows_result()?;
 
-    return Ok(result.rows_num() != 0);
+    Ok(result.rows_num() != 0)
 }
 
-async fn insert_user(session: &Arc<Session>, mut payload: &mut RequestUser) -> Result<(Uuid, Uuid), Box<dyn StdError>> {
+async fn insert_user(session: &Arc<Session>, payload: &mut RequestUser) -> Result<(Uuid, Uuid), Box<dyn StdError>> {
     let gen_jwt = Uuid::new_v4();
     let gen_user_id = Uuid::new_v4();
     hash_password(&mut payload.password).expect("Hashing error, disabling for safety.");
