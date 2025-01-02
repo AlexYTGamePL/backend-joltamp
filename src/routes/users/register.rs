@@ -8,6 +8,7 @@ use scylla::transport::query_result::IntoRowsResultError;
 use serde::{Deserialize, Serialize};
 use serde::de::{Error, StdError};
 use uuid::Uuid;
+use crate::security::passwords::hash_password;
 
 #[derive(Deserialize)]
 pub struct RequestUser {
@@ -34,7 +35,7 @@ pub enum ReturnType {
 
 pub async fn register(
     State(session): State<Arc<Session>>,
-    Json(payload): Json<RequestUser>,
+    Json(mut payload): Json<RequestUser>,
 ) -> (StatusCode, Json<ReturnType>) {
     if payload.email.is_empty() || payload.password.is_empty() || payload.username.is_empty(){
         return (StatusCode::BAD_REQUEST, Json(ReturnType::Error(RegisterError { message: String::from("Not every field satisfied") })));
@@ -53,7 +54,7 @@ pub async fn register(
     }else{
         return (StatusCode::INTERNAL_SERVER_ERROR, Json(ReturnType::Error(RegisterError { message: String::from("register#0x01 Internal server error")})));
     }
-    if let Ok(user) = insert_user(&session, &payload).await{
+    if let Ok(user) = insert_user(&session, &mut payload).await{
         return (StatusCode::CREATED, Json(ReturnType::ReturnUser(ReturnUser{
             jwt: user.0.to_string(),
             user_id: user.1.to_string(),
@@ -69,14 +70,12 @@ async fn check_username_free(session: &Arc<Session>, username: &String) -> Resul
     return Ok(result.rows_num() != 0);
 }
 
-async fn insert_user(session: &Arc<Session>, payload: &RequestUser) -> Result<(Uuid, Uuid), Box<dyn StdError>> {
+async fn insert_user(session: &Arc<Session>, mut payload: &mut RequestUser) -> Result<(Uuid, Uuid), Box<dyn StdError>> {
     let gen_jwt = Uuid::new_v4();
     let gen_user_id = Uuid::new_v4();
-    let password_hash = crate::security::passwords::hash_password(payload.password.as_str());
-    if let Ok(password_hash) = password_hash {
-        session.query_unpaged("INSERT INTO joltamp.users (createdat, user_id, username, displayname, email, password, isadmin, jwt, status) VALUES (todate(now()), ?, ?, ?, ?, ?, false, ?, 0)",
-                                         (gen_user_id, &payload.username, &payload.username, &payload.email, &password_hash, gen_jwt)
-        ).await?;
-    }
+    hash_password(&mut payload.password).expect("Hashing error, disabling for safety.");
+    session.query_unpaged("INSERT INTO joltamp.users (createdat, user_id, username, displayname, email, password, isadmin, jwt, status) VALUES (todate(now()), ?, ?, ?, ?, ?, false, ?, 0)",
+                                     (gen_user_id, &payload.username, &payload.username, &payload.email, &payload.password, gen_jwt)
+    ).await?;
     Ok((gen_jwt, gen_user_id))
 }
